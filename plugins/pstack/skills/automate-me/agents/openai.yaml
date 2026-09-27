@@ -1,0 +1,5 @@
+interface:
+  display_name: "Automate Me"
+  short_description: "Explicit P-stack workflow: Automate Me"
+policy:
+  allow_implicit_invocation: false

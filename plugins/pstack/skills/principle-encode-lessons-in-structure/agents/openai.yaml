@@ -1,0 +1,5 @@
+interface:
+  display_name: "Principle Encode Lessons In Structure"
+  short_description: "Internal P-stack principle: Encode Lessons In Structure"
+policy:
+  allow_implicit_invocation: false

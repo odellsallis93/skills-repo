@@ -1,0 +1,5 @@
+interface:
+  display_name: "Rename Chat"
+  short_description: "Explicit Codex skill: Rename Chat"
+policy:
+  allow_implicit_invocation: false

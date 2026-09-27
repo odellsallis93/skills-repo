@@ -1,0 +1,5 @@
+interface:
+  display_name: "Comment Sicko"
+  short_description: "Internal read-only P-stack comment reviewer"
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,8 @@
+.DS_Store
+.scratch/
+*.log
+*.swp
+.skills-backup/
+.env
+.env.*
+!.env.example

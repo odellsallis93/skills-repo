@@ -1,0 +1,5 @@
+interface:
+  display_name: "Shell"
+  short_description: "Explicit Codex skill: Shell"
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,5 @@
+interface:
+  display_name: "Setup o-stack"
+  short_description: "Write Cursor per-role model rule for o-stack"
+policy:
+  allow_implicit_invocation: false

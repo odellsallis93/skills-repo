@@ -1,0 +1,5 @@
+interface:
+  display_name: "Review"
+  short_description: "Explicit Codex skill: Review"
+policy:
+  allow_implicit_invocation: false

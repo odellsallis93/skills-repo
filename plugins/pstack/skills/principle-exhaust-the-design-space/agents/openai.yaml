@@ -1,0 +1,5 @@
+interface:
+  display_name: "Principle Exhaust The Design Space"
+  short_description: "Internal P-stack principle: Exhaust The Design Space"
+policy:
+  allow_implicit_invocation: false

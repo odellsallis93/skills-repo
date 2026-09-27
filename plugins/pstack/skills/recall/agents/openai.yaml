@@ -1,0 +1,5 @@
+interface:
+  display_name: "Recall"
+  short_description: "Explicit P-stack workflow: Recall"
+policy:
+  allow_implicit_invocation: false

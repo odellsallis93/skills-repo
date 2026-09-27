@@ -1,0 +1,5 @@
+interface:
+  display_name: "Swarm"
+  short_description: "Explicit P-stack workflow: Swarm"
+policy:
+  allow_implicit_invocation: false

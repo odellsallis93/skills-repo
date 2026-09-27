@@ -1,0 +1,5 @@
+interface:
+  display_name: "Onboard"
+  short_description: "Explicit Codex skill: Onboard"
+policy:
+  allow_implicit_invocation: false

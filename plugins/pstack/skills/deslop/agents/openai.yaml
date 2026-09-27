@@ -1,0 +1,5 @@
+interface:
+  display_name: "Deslop"
+  short_description: "Explicit dependency used by P-stack before commits"
+policy:
+  allow_implicit_invocation: false

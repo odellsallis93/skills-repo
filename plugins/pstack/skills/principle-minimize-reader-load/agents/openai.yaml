@@ -1,0 +1,5 @@
+interface:
+  display_name: "Principle Minimize Reader Load"
+  short_description: "Internal P-stack principle: Minimize Reader Load"
+policy:
+  allow_implicit_invocation: false

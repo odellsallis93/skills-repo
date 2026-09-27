@@ -1,0 +1,5 @@
+interface:
+  display_name: "Principle Experience First"
+  short_description: "Internal P-stack principle: Experience First"
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,5 @@
+interface:
+  display_name: "Poteto Agent"
+  short_description: "Internal Codex wrapper for delegated P-stack work"
+policy:
+  allow_implicit_invocation: false

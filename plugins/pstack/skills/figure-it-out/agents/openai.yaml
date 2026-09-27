@@ -1,0 +1,5 @@
+interface:
+  display_name: "Figure It Out"
+  short_description: "Explicit P-stack workflow: Figure It Out"
+policy:
+  allow_implicit_invocation: false

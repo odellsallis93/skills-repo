@@ -1,0 +1,41 @@
+{
+  "name": "pstack",
+  "version": "0.14.5+codex.20260828211554",
+  "description": "Codex-native port of Cursor's pstack 0.14.5 agent skills plugin: rigorous engineering workflows, deliberate parallelism, and verified delivery.",
+  "author": {
+    "name": "ODell Sallis"
+  },
+  "homepage": "https://github.com/cursor/plugins/tree/main/pstack",
+  "repository": "",
+  "license": "MIT",
+  "keywords": [
+    "agent",
+    "skills",
+    "agent-skills",
+    "artificial-intelligence",
+    "llm",
+    "ai-agent",
+    "ai",
+    "pstack",
+    "poteto-mode",
+    "workflow",
+    "principles",
+    "subagents",
+    "Cursor",
+    "verification"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "pstack",
+    "shortDescription": "Go deep first. Write less, verify more.",
+    "longDescription": "A Codex-native adaptation of Cursor's pstack agent skills plugin 0.14.5. It provides poteto-mode, architecture and investigation workflows, parallel arena and swarm execution, adversarial review, TDD, bot UI automation guidance, PR delivery playbooks, and twenty-one engineering principles.",
+    "developerName": "ODell Sallis, with a Codex platform adaptation",
+    "category": "AI Agents",
+    "defaultPrompt": [
+      "Use poteto-mode for this task.",
+      "Interrogate this change with multiple models.",
+      "Run a swarm over this work."
+    ],
+    "brandColor": "#7C3AED"
+  }
+}

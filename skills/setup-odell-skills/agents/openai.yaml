@@ -1,0 +1,5 @@
+interface:
+  display_name: "Setup Odell skills"
+  short_description: "Configure repo issue tracker, labels, and domain docs"
+policy:
+  allow_implicit_invocation: false

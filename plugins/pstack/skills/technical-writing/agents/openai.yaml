@@ -1,0 +1,5 @@
+interface:
+  display_name: "Technical Writing"
+  short_description: "Explicit P-stack workflow: Technical Writing"
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,5 @@
+interface:
+  display_name: "Show Me Your Work"
+  short_description: "Explicit P-stack workflow: Show Me Your Work"
+policy:
+  allow_implicit_invocation: false

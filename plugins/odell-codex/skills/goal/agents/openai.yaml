@@ -1,0 +1,5 @@
+interface:
+  display_name: "Goal"
+  short_description: "Explicit Codex skill: Goal"
+policy:
+  allow_implicit_invocation: false

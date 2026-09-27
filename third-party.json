@@ -1,0 +1,20 @@
+{
+  "skills": [
+    {
+      "name": "agent-browser",
+      "source": "vercel-labs/agent-browser",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/vercel-labs/agent-browser.git",
+      "skillPath": "skills/agent-browser/SKILL.md",
+      "install": "npx skills add vercel-labs/agent-browser -g"
+    },
+    {
+      "name": "find-skills",
+      "source": "vercel-labs/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/vercel-labs/skills.git",
+      "skillPath": "skills/find-skills/SKILL.md",
+      "install": "npx skills add vercel-labs/skills -g"
+    }
+  ]
+}

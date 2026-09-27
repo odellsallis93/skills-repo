@@ -1,0 +1,420 @@
+#!/usr/bin/env bash
+# Install skills from this repo into harness folders. Safe to re-run.
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage: bin/install [--dry-run]
+
+Symlink Odell skills into ~/.agents/skills and ~/.claude/skills,
+copy them into ~/.cursor/skills (Cursor Cloud Agents), install
+harness-only skills, wire plugins, and remove Codex-only copies
+that would leak into Cursor.
+
+Does not touch harness built-ins or third-party skills listed in
+third-party.json.
+EOF
+}
+
+DRY_RUN=0
+for arg in "$@"; do
+  case "$arg" in
+    --dry-run) DRY_RUN=1 ;;
+    -h|--help) usage; exit 0 ;;
+    *)
+      echo "unknown argument: $arg" >&2
+      usage >&2
+      exit 2
+      ;;
+  esac
+done
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+# macOS ships Bash 3.2. Avoid mapfile and empty-array expansion under `set -u`.
+shopt -s nullglob
+TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
+BACKUP_ROOT="${HOME}/.skills-backup/${TIMESTAMP}"
+AGENTS_SKILLS="${HOME}/.agents/skills"
+CLAUDE_SKILLS="${HOME}/.claude/skills"
+CURSOR_SKILLS="${HOME}/.cursor/skills"
+ATOMIC_SKILLS="${HOME}/.atomic/agent/skills"
+CURSOR_PLUGIN_DIR="${HOME}/.cursor/plugins/local"
+MARKETPLACE="${HOME}/.agents/plugins/marketplace.json"
+THIRD_PARTY_JSON="${REPO_ROOT}/third-party.json"
+
+say() { printf '%s\n' "$*"; }
+do_or_dry() {
+  if [[ "$DRY_RUN" -eq 1 ]]; then
+    say "DRY  $*"
+  else
+    say "DO   $*"
+  fi
+}
+
+ensure_dir() {
+  local dir="$1"
+  if [[ ! -d "$dir" ]]; then
+    do_or_dry "mkdir -p $dir"
+    [[ "$DRY_RUN" -eq 1 ]] || mkdir -p "$dir"
+  fi
+}
+
+is_under() {
+  local child="$1" parent="$2"
+  local rc rp
+  rc="$(cd "$child" && pwd)"
+  rp="$(cd "$parent" && pwd)"
+  [[ "$rc" == "$rp" || "$rc" == "$rp"/* ]]
+}
+
+third_party_names() {
+  python3 - "$THIRD_PARTY_JSON" <<'PY'
+import json, sys
+from pathlib import Path
+p = Path(sys.argv[1])
+data = json.loads(p.read_text())
+for skill in data.get("skills", []):
+    print(skill["name"])
+PY
+}
+
+is_third_party() {
+  local name="$1" n
+  for n in ${THIRD_PARTY[@]+"${THIRD_PARTY[@]}"}; do
+    [[ "$n" == "$name" ]] && return 0
+  done
+  return 1
+}
+
+skill_dirs() {
+  local parent="$1"
+  [[ -d "$parent" ]] || return 0
+  local d
+  for d in "$parent"/*; do
+    [[ -d "$d" ]] || continue
+    [[ -f "$d/SKILL.md" ]] || continue
+    printf '%s\n' "$d"
+  done
+}
+
+backup_path() {
+  local dest="$1"
+  printf '%s/%s' "$BACKUP_ROOT" "${dest#"$HOME"/}"
+}
+
+backup_then_remove() {
+  local dest="$1"
+  local dest_backup
+  dest_backup="$(backup_path "$dest")"
+  do_or_dry "backup $dest -> $dest_backup"
+  if [[ "$DRY_RUN" -eq 0 ]]; then
+    mkdir -p "$(dirname "$dest_backup")"
+    mv "$dest" "$dest_backup"
+  fi
+}
+
+remove_path() {
+  local dest="$1"
+  if [[ -L "$dest" ]]; then
+    do_or_dry "rm $dest"
+    [[ "$DRY_RUN" -eq 1 ]] || rm "$dest"
+  elif [[ -e "$dest" ]]; then
+    backup_then_remove "$dest"
+  fi
+}
+
+# Replace dest with a symlink to src. Skip foreign links and third-party names.
+link_skill() {
+  local src="$1" dest="$2"
+  local name dest_dir
+  name="$(basename "$src")"
+  dest_dir="$(dirname "$dest")"
+
+  if is_third_party "$name"; then
+    say "SKIP third-party $dest"
+    return 0
+  fi
+
+  ensure_dir "$dest_dir"
+
+  if [[ -L "$dest" ]]; then
+    local current
+    current="$(readlink "$dest")"
+    if [[ "$current" == "$src" ]]; then
+      say "OK   $dest -> $src"
+      return 0
+    fi
+    local resolved
+    resolved="$(cd "$(dirname "$dest")" && cd "$(dirname "$current")" 2>/dev/null && pwd)/$(basename "$current")" || resolved=""
+    if [[ -n "$resolved" ]] && is_under "$resolved" "$REPO_ROOT"; then
+      do_or_dry "rm stale link $dest"
+      [[ "$DRY_RUN" -eq 1 ]] || rm "$dest"
+    else
+      say "SKIP foreign symlink $dest -> $current"
+      return 0
+    fi
+  elif [[ -e "$dest" ]]; then
+    backup_then_remove "$dest"
+  fi
+
+  do_or_dry "ln -s $src $dest"
+  [[ "$DRY_RUN" -eq 1 ]] || ln -s "$src" "$dest"
+}
+
+# Real copy for Cursor Cloud Agents.
+copy_skill() {
+  local src="$1" dest="$2"
+  local name dest_dir
+  name="$(basename "$src")"
+  dest_dir="$(dirname "$dest")"
+
+  if is_third_party "$name"; then
+    say "SKIP third-party $dest"
+    return 0
+  fi
+
+  ensure_dir "$dest_dir"
+
+  if [[ -L "$dest" ]]; then
+    local current resolved
+    current="$(readlink "$dest")"
+    resolved="$(cd "$(dirname "$dest")" && cd "$(dirname "$current")" 2>/dev/null && pwd)/$(basename "$current")" || resolved=""
+    if [[ -n "$resolved" ]] && is_under "$resolved" "$REPO_ROOT"; then
+      do_or_dry "rm link before copy $dest"
+      [[ "$DRY_RUN" -eq 1 ]] || rm "$dest"
+    else
+      say "SKIP foreign symlink $dest -> $current"
+      return 0
+    fi
+  fi
+
+  if [[ -e "$dest" && ! -d "$dest" ]]; then
+    backup_then_remove "$dest"
+  fi
+
+  do_or_dry "rsync $src/ -> $dest/"
+  if [[ "$DRY_RUN" -eq 0 ]]; then
+    mkdir -p "$dest"
+    rsync -a --delete --exclude .DS_Store "$src/" "$dest/"
+  fi
+}
+
+remove_stale_links() {
+  local dest_dir="$1"
+  shift
+  local allowed=()
+  if [[ "$#" -gt 0 ]]; then
+    allowed=("$@")
+  fi
+  [[ -d "$dest_dir" ]] || return 0
+  local dest current resolved name keep a
+  for dest in "$dest_dir"/*; do
+    [[ -L "$dest" ]] || continue
+    name="$(basename "$dest")"
+    is_third_party "$name" && continue
+    current="$(readlink "$dest")"
+    resolved="$(cd "$(dirname "$dest")" && cd "$(dirname "$current")" 2>/dev/null && pwd)/$(basename "$current")" || continue
+    is_under "$resolved" "$REPO_ROOT" || continue
+    keep=0
+    for a in ${allowed[@]+"${allowed[@]}"}; do
+      [[ "$resolved" == "$a" ]] && keep=1
+    done
+    if [[ "$keep" -eq 0 ]]; then
+      do_or_dry "rm stale $dest"
+      [[ "$DRY_RUN" -eq 1 ]] || rm "$dest"
+    fi
+  done
+}
+
+link_plugin() {
+  local src="$1" dest="$2"
+  ensure_dir "$(dirname "$dest")"
+  if [[ -L "$dest" ]]; then
+    local current
+    current="$(readlink "$dest")"
+    if [[ "$current" == "$src" ]]; then
+      say "OK   $dest -> $src"
+      return 0
+    fi
+    local resolved
+    resolved="$(cd "$(dirname "$dest")" && cd "$(dirname "$current")" 2>/dev/null && pwd)/$(basename "$current")" || resolved=""
+    if [[ -n "$resolved" ]] && is_under "$resolved" "$REPO_ROOT"; then
+      do_or_dry "rm $dest"
+      [[ "$DRY_RUN" -eq 1 ]] || rm "$dest"
+    else
+      say "SKIP foreign plugin $dest -> $current"
+      return 0
+    fi
+  elif [[ -e "$dest" ]]; then
+    backup_then_remove "$dest"
+  fi
+  do_or_dry "ln -s $src $dest"
+  [[ "$DRY_RUN" -eq 1 ]] || ln -s "$src" "$dest"
+}
+
+write_marketplace() {
+  local pstack="$REPO_ROOT/plugins/pstack"
+  local odell_codex="$REPO_ROOT/plugins/odell-codex"
+  local dest="$MARKETPLACE"
+  ensure_dir "$(dirname "$dest")"
+
+  do_or_dry "write marketplace $dest"
+  [[ "$DRY_RUN" -eq 1 ]] && return 0
+
+  python3 - "$dest" "$pstack" "$odell_codex" <<'PY'
+import json, sys
+from pathlib import Path
+
+dest = Path(sys.argv[1])
+pstack = sys.argv[2]
+odell = sys.argv[3]
+
+ours = {
+    "pstack": {
+        "name": "pstack",
+        "source": {"source": "local", "path": pstack},
+        "policy": {"installation": "AVAILABLE", "authentication": "ON_INSTALL"},
+        "category": "Developer Tools",
+    },
+    "odell-codex": {
+        "name": "odell-codex",
+        "source": {"source": "local", "path": odell},
+        "policy": {"installation": "AVAILABLE", "authentication": "ON_INSTALL"},
+        "category": "Developer Tools",
+    },
+}
+
+data = {
+    "name": "personal",
+    "interface": {"displayName": "Personal"},
+    "plugins": [],
+}
+if dest.exists() and not dest.is_symlink():
+    try:
+        data = json.loads(dest.read_text())
+    except json.JSONDecodeError:
+        pass
+elif dest.is_symlink():
+    dest.unlink()
+
+plugins = list(data.get("plugins") or [])
+by_name = {}
+for plugin in plugins:
+    name = plugin.get("name")
+    if name:
+        by_name[name] = plugin
+
+for name, plugin in ours.items():
+    by_name[name] = plugin
+
+# Keep unrelated plugins, then ours in a stable order.
+ordered = []
+seen = set()
+for plugin in plugins:
+    name = plugin.get("name")
+    if name in ours:
+        ordered.append(ours[name])
+        seen.add(name)
+    else:
+        ordered.append(plugin)
+        if name:
+            seen.add(name)
+for name, plugin in ours.items():
+    if name not in seen:
+        ordered.append(plugin)
+
+data["plugins"] = ordered
+if "name" not in data:
+    data["name"] = "personal"
+if "interface" not in data:
+    data["interface"] = {"displayName": "Personal"}
+dest.write_text(json.dumps(data, indent=2) + "\n")
+PY
+}
+
+THIRD_PARTY=()
+while IFS= read -r _tp; do
+  [[ -n "$_tp" ]] && THIRD_PARTY+=("$_tp")
+done < <(third_party_names)
+
+say "repo $REPO_ROOT"
+[[ "$DRY_RUN" -eq 1 ]] && say "mode dry-run"
+
+ensure_dir "$AGENTS_SKILLS"
+ensure_dir "$CLAUDE_SKILLS"
+ensure_dir "$CURSOR_SKILLS"
+ensure_dir "$ATOMIC_SKILLS"
+
+# Odell skills: link for agents/claude, copy for Cursor Cloud Agents.
+odell_allowed=()
+while IFS= read -r src; do
+  [[ -n "$src" ]] || continue
+  name="$(basename "$src")"
+  odell_allowed+=("$src")
+  link_skill "$src" "$AGENTS_SKILLS/$name"
+  link_skill "$src" "$CLAUDE_SKILLS/$name"
+  copy_skill "$src" "$CURSOR_SKILLS/$name"
+done < <(skill_dirs "$REPO_ROOT/skills")
+
+# Cursor-only
+cursor_allowed=("${odell_allowed[@]}")
+while IFS= read -r src; do
+  [[ -n "$src" ]] || continue
+  name="$(basename "$src")"
+  cursor_allowed+=("$src")
+  copy_skill "$src" "$CURSOR_SKILLS/$name"
+done < <(skill_dirs "$REPO_ROOT/harness/cursor/skills")
+
+# Atomic-only
+atomic_allowed=()
+while IFS= read -r src; do
+  [[ -n "$src" ]] || continue
+  name="$(basename "$src")"
+  atomic_allowed+=("$src")
+  link_skill "$src" "$ATOMIC_SKILLS/$name"
+done < <(skill_dirs "$REPO_ROOT/harness/atomic/skills")
+
+# Drop Codex-only copies that leak into shared folders, plus the retired name.
+leak_names=()
+while IFS= read -r src; do
+  [[ -n "$src" ]] || continue
+  leak_names+=("$(basename "$src")")
+done < <(skill_dirs "$REPO_ROOT/plugins/odell-codex/skills")
+leak_names+=("setup-ostack-skills")
+
+for name in "${leak_names[@]}"; do
+  is_third_party "$name" && continue
+  for dest_dir in "$AGENTS_SKILLS" "$CLAUDE_SKILLS" "$CURSOR_SKILLS" "$ATOMIC_SKILLS"; do
+    dest="$dest_dir/$name"
+    [[ -e "$dest" || -L "$dest" ]] || continue
+    # Leave a managed link only if it still points at an Odell skill (shouldn't).
+    if [[ -L "$dest" ]]; then
+      current="$(readlink "$dest")"
+      resolved="$(cd "$(dirname "$dest")" && cd "$(dirname "$current")" 2>/dev/null && pwd)/$(basename "$current")" || resolved=""
+      if [[ -n "$resolved" ]] && is_under "$resolved" "$REPO_ROOT/skills"; then
+        continue
+      fi
+    fi
+    say "LEAK $dest"
+    remove_path "$dest"
+  done
+done
+
+remove_stale_links "$AGENTS_SKILLS" ${odell_allowed[@]+"${odell_allowed[@]}"}
+remove_stale_links "$CLAUDE_SKILLS" ${odell_allowed[@]+"${odell_allowed[@]}"}
+remove_stale_links "$ATOMIC_SKILLS" ${atomic_allowed[@]+"${atomic_allowed[@]}"}
+
+# Cursor copies are not links; still drop leftover managed links.
+remove_stale_links "$CURSOR_SKILLS" ${cursor_allowed[@]+"${cursor_allowed[@]}"}
+
+link_plugin "$REPO_ROOT/plugins/o-stack" "$CURSOR_PLUGIN_DIR/o-stack"
+write_marketplace
+
+if [[ -d "$BACKUP_ROOT" ]]; then
+  say "backup $BACKUP_ROOT"
+elif [[ "$DRY_RUN" -eq 1 ]]; then
+  say "backup would go to $BACKUP_ROOT if anything needed moving"
+fi
+
+say "done"

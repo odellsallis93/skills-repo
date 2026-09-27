@@ -1,0 +1,5 @@
+interface:
+  display_name: "Create Subagent"
+  short_description: "Explicit Codex skill: Create Subagent"
+policy:
+  allow_implicit_invocation: false
