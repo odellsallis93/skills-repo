@@ -1,6 +1,6 @@
 # skills-repo
 
-Source of truth for Odell skills, harness-only skills, the **o-stack** Cursor plugin, and the **pstack** Codex port. Clone it, run `bin/install`, and Atomic, Codex, Claude Code, and Cursor load the same files.
+Source of truth for Odell skills, harness-only skills, the **o-stack** Cursor plugin, and the **pstack** Codex port.
 
 Terms are defined in [CONTEXT.md](./CONTEXT.md). Why Codex-only skills are a plugin: [docs/adr/0001-codex-harness-skills-ship-as-plugin.md](./docs/adr/0001-codex-harness-skills-ship-as-plugin.md). Why install uses per-skill symlinks: [docs/adr/0002-symlink-each-skill-from-the-clone.md](./docs/adr/0002-symlink-each-skill-from-the-clone.md).
 
