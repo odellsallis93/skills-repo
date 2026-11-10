@@ -1,6 +1,6 @@
 {
   "name": "odell-codex",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Codex-only ports of Cursor built-in skills. Installed as a plugin so Cursor does not load them from ~/.agents/skills.",
   "author": {
     "name": "ODell Sallis"
@@ -14,10 +14,12 @@
   ],
   "skills": "./skills/",
   "interface": {
-    "displayName": "odell-codex",
+    "displayName": "Cursor Built-in Codex Port",
     "shortDescription": "Codex ports of Cursor built-ins",
     "longDescription": "Codex-only rewrites of Cursor built-in skills (origin, share, loop, hooks, review helpers, and related). Ships as a plugin because Cursor also reads ~/.agents/skills.",
     "developerName": "ODell Sallis",
-    "category": "Developer Tools"
+    "category": "Developer Tools",
+    "logo": "./assets/cursor-codex-logo.png",
+    "composerIcon": "./assets/cursor-codex-composer.png"
   }
 }

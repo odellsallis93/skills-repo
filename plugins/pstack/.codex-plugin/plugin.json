@@ -1,6 +1,6 @@
 {
   "name": "pstack",
-  "version": "0.14.5+codex.20260828211554",
+  "version": "0.14.5+codex.20261104",
   "description": "Codex-native port of Cursor's pstack 0.14.5 agent skills plugin: rigorous engineering workflows, deliberate parallelism, and verified delivery.",
   "author": {
     "name": "ODell Sallis"
@@ -26,10 +26,10 @@
   ],
   "skills": "./skills/",
   "interface": {
-    "displayName": "pstack",
+    "displayName": "O-Stack for Codex",
     "shortDescription": "Go deep first. Write less, verify more.",
     "longDescription": "A Codex-native adaptation of Cursor's pstack agent skills plugin 0.14.5. It provides poteto-mode, architecture and investigation workflows, parallel arena and swarm execution, adversarial review, TDD, bot UI automation guidance, PR delivery playbooks, and twenty-one engineering principles.",
-    "developerName": "ODell Sallis, with a Codex platform adaptation",
+    "developerName": "ODell Sallis",
     "category": "AI Agents",
     "defaultPrompt": [
       "Use poteto-mode for this task.",

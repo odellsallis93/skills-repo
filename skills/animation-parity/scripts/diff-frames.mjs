@@ -18,6 +18,14 @@ const listFrames = async (directory) =>
 
 const originalFrames = await listFrames(originalDir);
 const migratedFrames = await listFrames(migratedDir);
+if (originalFrames.length === 0 || migratedFrames.length === 0) {
+  console.error("Both frame directories must contain at least one frame.");
+  process.exit(1);
+}
+if (originalFrames.some((name, index) => name !== migratedFrames[index])) {
+  console.error("Frame filenames must correspond between recordings.");
+  process.exit(1);
+}
 const frameCount = Math.min(originalFrames.length, migratedFrames.length);
 const threshold = Number(process.env.ANIMATION_PIXEL_THRESHOLD ?? "0.1");
 const peakThreshold = Number(process.env.ANIMATION_PEAK_THRESHOLD ?? "3");
@@ -63,7 +71,7 @@ for (let index = 0; index < frameCount; index += 1) {
   await writeFile(join(outputDir, frameName), PNG.sync.write(diff));
   results.push({
     frame: frameName,
-    timestampMs: Math.round((index / Number(process.env.ANIMATION_FPS ?? "10")) * 1000),
+    timestampMs: Math.round((index / Number(process.env.ANIMATION_FPS ?? "60")) * 1000),
     mismatchPercent: Number(mismatchPercent.toFixed(4)),
   });
 }

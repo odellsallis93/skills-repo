@@ -1,76 +1,83 @@
-# Animation Behavior Specification
+# Visual behavior specification
 
-## Scope and evidence sources
+Use this template for complex visual flows or animation parity. For a simple
+static change, a short expected-result and evidence note is sufficient. Fill
+relevant fields, remove unused rows, and replace template markers before use.
+Write `Not applicable` with a reason where a required section does not apply.
 
-- Updated:
-- Owner:
-- Source implementation(s) inspected:
-- Recordings, screenshots, or historical references inspected:
-- Confirmed product intent:
-- Open blocking questions:
+For the optional `review-flow.sh` helper, save this at
+`.cursor/docs/animation-behavior-spec.md` and use plain lowercase kebab-case flow
+names in level-three headings. Its checks cannot establish spec completeness.
 
-## Comparison environment
+## Scope and expected result
 
-- Browser and version:
-- Viewport and DPR:
-- Color scheme and reduced-motion setting:
-- Network and font readiness condition:
-- Route, route state, and authenticated state:
-- Randomness/time controls:
-- WebGL comparison region or excluded decorative region:
+- Owner and updated date, if useful:
+- Affected routes, components, and shared consumers:
+- Requested result and intentional differences:
+- Existing behavior to preserve:
+- Evidence sources and baseline provenance:
+- Unresolved questions and their effect on verification:
+
+## Capture conditions
+
+- Baseline and candidate build identities and URLs or app views:
+- Browser or app version, OS, viewport, and device pixel ratio:
+- Color scheme, reduced motion, and relevant responsive widths:
+- Route, scroll, authentication, storage, data, and feature flags:
+- Readiness conditions for fonts, images, and application state:
+- agent-browser session, viewport, and recording settings:
+- Time, randomness, simulation, and GPU controls where relevant:
+- Uncontrolled differences and comparison limitations:
 
 ## Flows
 
-### `<flow-name>`
+### <flow-name>
 
-**Purpose**
+#### Expected appearance and behavior
 
-**Trigger and preconditions**
+- Trigger and preconditions:
+- Reproducible actions and readiness signals:
+- Initial, intermediate, and final appearance:
+- Surrounding layout and preserved behavior:
+- Relevant semantic assertions, including focus or modal state:
+- Forbidden visible states or regressions:
 
-- Route:
-- Initial state:
-- User action or automatic trigger:
-- Automation procedure:
+#### Motion and lifecycle, when applicable
 
-**Expected timeline**
-
-| Timestamp | Phase | Visual behavior | Structural/accessibility behavior |
+| Trigger-relative time or phase | Visible behavior | Semantic state | Evidence or assertion |
 | --- | --- | --- | --- |
-| 0ms | initial |  |  |
-|  |  |  |  |
+| Before trigger | | | |
+| Intermediate phase | | | |
+| Settled result | | | |
 
-**Timing**
+- Duration, delay, easing, and ordering where required:
+- Cold load, repeat, interruption, and navigation behavior where affected:
+- Reduced-motion behavior:
+- Recording start, trigger alignment, capture rate, and sampling limits:
 
-- Duration:
-- Delay:
-- Easing:
-- Start and end tolerance:
+#### Acceptance and evidence
 
-**Lifecycle and interruption rules**
+- Basis for acceptance, including design reference or observed baseline:
+- Screenshots, recording, or frame sequence required for this flow:
+- agent-browser actions and FFmpeg extraction commands where applicable:
+- Comparison regions, masks, numeric tolerances, and rationale where used:
+- Critical states or timestamps requiring inspection:
+- Artifact directory and reproduction command or procedure:
 
-- Cold load:
-- Return navigation:
-- Repeated trigger:
-- Interrupted interaction:
-- Reduced motion:
+#### Verification result
 
-**Assertions**
+- Implementation identity, capture time, and actual environment checked:
+- Actions performed and assertions checked:
+- Evidence paths and visual observations:
+- Measured differences and timing drift where applicable:
+- Outcome, verified, failed, or unverified:
+- Missing checks, limitations, or unresolved defects:
 
-- Required final state:
-- Required intermediate state:
-- Forbidden transient states:
-- Required DOM/accessibility assertions:
+## Completion check
 
-**Verification**
-
-- Original URL:
-- Migrated URL:
-- Artifact directory:
-- UI mismatch threshold:
-- Critical frames for human review:
-
-## Approval
-
-- [ ] Each affected flow is complete, observed, and free of template markers.
-- [ ] Blocking questions are resolved before parity testing.
-- [ ] Thresholds and excluded regions have an explicit rationale.
+- [ ] Expected behavior distinguishes observed facts from requested changes.
+- [ ] Evidence covers affected states and comes from the final implementation.
+- [ ] Visual contents were inspected and relevant live flows were exercised.
+- [ ] Comparisons use suitable conditions, alignment, and stated tolerances.
+- [ ] The reported outcome discloses missing coverage and unresolved defects.
+- [ ] Record approval here if the project or user requires it.

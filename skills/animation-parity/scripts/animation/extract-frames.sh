@@ -3,9 +3,7 @@ set -euo pipefail
 
 FLOW_NAME="${1:?Pass a flow name, e.g. home-intro}"
 ROOT=".cursor/artifacts/animations/$FLOW_NAME"
-FPS="${ANIMATION_FPS:-10}"
-WIDTH="${ANIMATION_FRAME_WIDTH:-1440}"
-HEIGHT="${ANIMATION_FRAME_HEIGHT:-900}"
+FPS="${ANIMATION_FPS:-60}"
 
 for implementation in original migrated; do
   input="$ROOT/$implementation/run.webm"
@@ -17,6 +15,6 @@ for implementation in original migrated; do
   mkdir -p "$output"
   rm -f "$output"/frame-*.png
   ffmpeg -y -i "$input" \
-    -vf "fps=$FPS,scale=${WIDTH}:${HEIGHT}:flags=lanczos" \
+    -vf "fps=$FPS" \
     "$output/frame-%04d.png"
 done

@@ -1,97 +1,111 @@
 ---
 name: animation-parity
-description: Enforces evidence-based verification for animation, motion, 3D, and WebGL changes. Use when changing transitions, intros, menus, modals, scroll choreography, GSAP timelines, Framer Motion, canvas, Three.js, React Three Fiber, or animation-heavy migrations.
+description: Verify aesthetic changes using agent-browser for browser checks and screenshots, plus FFmpeg for motion evidence. Use for changes to UI styling, layout, typography, responsive appearance, animation, transitions, canvas, 3D, or WebGL, including unintended visual changes.
 ---
 
-# Animation Parity
+# Visual verification
 
-Personal skill at `~/.cursor/skills/animation-parity/`. Use this workflow whenever a
-change can alter timing, ordering, lifecycle, or intermediate visual states.
+Every aesthetic change needs direct confirmation of the rendered result. Use this
+workflow when styling or appearance changes, including unintended layout or visual
+changes caused by functional code. Check preservation when a refactor can affect
+appearance. A purely functional or text change with no aesthetic effect does not
+trigger this workflow.
 
-## Quick Start
+## Required tools
 
-1. Ensure the target repo has working folders inside its local `.cursor`
-   directory: `.cursor/docs/` and `.cursor/artifacts/animations/`. Create any
-   that are missing. Executable helpers live in this skill's `scripts/`
-   directory.
-2. Look for `.cursor/docs/animation-behavior-spec.md`. If it does not exist,
-   create it before changing or testing motion.
-3. Build the spec from the source implementation, existing recordings, and
-   browser observation. It must cover every affected interaction, animation, and
-   transition; do not create a stub or leave `TODO` placeholders.
-4. Ask before proceeding if feature flags, intro lifecycle, or legacy behavior
-   conflict with product intent.
-5. Lock the comparison environment: browser, viewport, DPR, color scheme,
-   reduced-motion setting, route state, and seeded randomness where possible.
-6. Record the original flow before changing it, then record the migrated flow
-   with the same actions and explicit waits.
-7. Create the evidence artifacts while testing: videos, screenshots, structural
-   snapshots, fixed-interval frames, diff images, capture metadata, and summary.
-8. Extract frames at 100ms intervals, diff matching frames, inspect the worst
-   timestamps, and update the behavior spec if testing exposes a missing rule.
-9. Report the spec path, artifact path, timing drift, mismatch statistics,
-   forbidden intermediate states, and pass/fail status.
+Use `agent-browser` for browser navigation, interaction, screenshots, and video
+capture. If agent-browser is unavailable, inform the user and use Playwright.
+Ask for authorization before using other alternatives to either agent-browser or
+FFmpeg. Use FFmpeg to extract frames from recordings, then inspect those images
+when motion or intermediate states matter. Static changes need inspected
+screenshots without a mandatory video. Use `ffprobe` to check dimensions, rate, and
+timestamps when needed. Read the installed CLI's `agent-browser skills get core`
+before browser work and consult command help for version-specific options.
+See [reference.md](reference.md#agent-browser-and-ffmpeg) for capture recipes.
 
-## Behavior Spec Is Required
+## Choose evidence that proves the change
 
-`.cursor/docs/animation-behavior-spec.md` is the repository's behavior contract. Create
-it from [behavior-spec-template.md](behavior-spec-template.md) only when it is
-missing; replace every template marker with observed behavior before testing.
+| Change | Minimum confirmation |
+| --- | --- |
+| Static appearance, such as spacing, color, typography, images, or layout | Open and inspect fresh screenshots or rendered previews of the affected result. Include enough surrounding context to expose layout regressions. |
+| Interactive or responsive UI, such as menus, forms, overlays, or breakpoints | Exercise the affected flow in a running browser or app and inspect screenshots of the relevant states and viewport sizes. |
+| Motion, transitions, scroll effects, or animated canvas, 3D, or WebGL | Exercise the running flow. Record at 60 fps and inspect FFmpeg-extracted frames covering the trigger, intermediate behavior, and final state. Inspect every captured frame for intricate animation, transitions, and quick interactions. |
+| Migration or refactor that must preserve visual behavior | Compare baseline and candidate evidence under matched conditions. Add aligned frames and measured timing when claiming animation parity. |
 
-For each affected flow, specify:
+Combine rows when a change spans them. A screenshot is enough for a static color
+change; it cannot establish transition timing. Match the depth of verification
+to the affected behavior and likely failure modes. Text-only edits with no
+effect on rendered output do not need this workflow.
 
-- trigger, preconditions, route, and exact automation actions
-- initial, intermediate, and terminal visual/structural states
-- ordered phases with duration, delay, easing, and expected timestamps
-- one-time lifecycle, interruption, navigation, and reduced-motion behavior
-- required accessibility/DOM assertions and forbidden transient states
-- deterministic-WebGL handling, masks/crops, and acceptance thresholds
+## Verification workflow
 
-The behavior spec must describe observed behavior, identify unknowns explicitly
-as blocking questions, and distinguish legacy behavior from confirmed product
-intent. Do not run `anim:review` until relevant flows are complete.
+1. **Define the expected result.** Identify affected routes, components, states,
+   and relevant viewports. Use the user's request and existing design references
+   to distinguish intentional changes from behavior that must remain intact.
+   Ask only when unresolved product intent would materially change the result.
+2. **Capture a useful baseline.** For an existing UI, inspect and capture the
+   affected state before editing when possible. If edits already exist, use an
+   isolated original build or existing evidence without discarding user work.
+   For new UI or an unavailable baseline, verify against the requested result
+   and disclose that no before/after parity comparison was possible.
+3. **Run the actual result.** Start the project's existing preview and use
+   agent-browser to verify browser output. For a native app, use its supported
+   live inspection tools. Confirm the intended route, build, and state. Wait for
+   observable readiness, including relevant fonts and assets, rather than
+   treating a successful build, arbitrary sleep, or network idle as proof.
+4. **Exercise affected states.** Follow the user's path through the change.
+   Check the relevant responsive widths and nearby layout. For shared styles
+   or components, include representative consumers. Cover focus, hover, open,
+   closed, loading, empty, error, and disabled states only where affected.
+   For motion, include repeat or interrupted triggers and reduced motion where
+   relevant. See [reference.md](reference.md) for capture and comparison details.
+5. **Capture and inspect.** Open the screenshots, preview, recording, or frames
+   with a tool that displays their visual contents. Check the changed region
+   and its context against the expectation. For motion, inspect the sequence,
+   not just its endpoints. DOM snapshots, computed styles, console output,
+   automated diffs, and tests support this inspection; none replaces it.
+6. **Fix and recheck.** Correct unintended differences and repeat the affected
+   checks. Evidence must come from the final implementation. If a later edit
+   affects the result, refresh the relevant evidence before claiming success.
 
-## Required Evidence
+For a simple edit, keep the expected result and evidence record in the task
+notes. For complex motion or parity work, use an existing behavior specification
+or [behavior-spec-template.md](behavior-spec-template.md) to record the affected
+flows before implementation. Complete relevant fields from observation or
+confirmed requirements. Mark genuine unknowns and distinguish them from facts.
+Do not require a new specification or animation toolchain for every CSS edit.
 
-A parity claim requires:
+## Evidence and completion
 
-- a complete behavior spec linked to the tested flow
-- full session video for original and migrated flows
-- annotated baseline screenshot
-- baseline structural snapshot
-- end-state screenshot(s)
-- end-state structural snapshot(s)
-- extracted fixed-interval frames
-- capture metadata, including URL and comparison environment
-- machine-readable per-frame diff summary
+Retain the captures used for inspection in the project's established artifact
+location. If there is none, use a task artifact directory and report its path.
+For each checked flow, record the route or preview, implementation revision or
+build identity, viewport, relevant settings, actions, evidence paths, and outcome.
+Record additional comparison conditions only where they matter.
 
-No video and frame diff means no animation parity claim.
+Report one of these outcomes for each affected flow:
 
-## Pass/Fail Defaults
+- **Verified:** the required rendered and live checks passed on the final result,
+  with inspected evidence linked or located.
+- **Failed:** observed differences or behavior violate the expected result.
+- **Unverified:** required checks could not run, evidence could not be inspected,
+  or coverage remains incomplete. State the specific blocker and missing check.
 
-- start-time drift: <= 100ms
-- end-time drift: <= 100ms
-- mean UI-region mismatch: <= 1.5%
-- peak critical-key-frame mismatch: <= 3%
-- zero forbidden intermediate states, including one-frame flashes
-- human review required for hero transitions, intros, menus, modals, and brand-critical WebGL
+A build, test pass, generated capture, or helper script's `passed` flag alone
+does not establish visual verification. Never invent observations or describe
+uninspected evidence as reviewed. Do not weaken thresholds, hide the changed
+region, or replace baselines merely to make a comparison pass.
 
-## Repository Workflow
+If agent-browser is unavailable, disclose the Playwright fallback. If FFmpeg or
+capture access is unavailable, resolve the setup within the task's permissions
+or request authorization for another approach. Continue useful authorized work,
+but keep affected claims unverified until the required evidence is inspected.
+If 60 fps capture is unavailable, use the highest available rate and disclose
+the limit; leave claims that require 60 fps unverified. For parity, forbidden
+intermediate states are failures, within the limits of the capture.
+Require user review only when acceptance depends on unresolved design judgment
+or the user requests it.
 
-The recording, extraction, and diff scripts live in this skill under
-`scripts/animation/` (plus `scripts/diff-frames.mjs`). Point each repo's
-`anim:*` commands in `package.json` at:
-
-```text
-~/.cursor/skills/animation-parity/scripts/...
-```
-
-Store outputs under `.cursor/artifacts/animations/<flow>/`. Put project-specific
-interaction scripts in `.cursor/animation/flows/<flow>.sh` (preferred) or this
-skill's `scripts/animation/flows/`. `anim:review` refuses to run without the
-canonical behavior spec and copies it into that flow's artifacts. Keep
-choreography in isolated files and timing values centralized. Prefer a faithful
-imperative port before refactoring.
-
-For the spec template, commands, flow configuration, WebGL masking, and
-troubleshooting, read [reference.md](reference.md).
+In the final response, state what was checked, the observed result, evidence
+locations, and any remaining gaps. Limit the claim to the states and environments
+actually inspected.
